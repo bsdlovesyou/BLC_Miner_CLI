@@ -17,12 +17,16 @@
 
 package net.mohatu.bloocoin.miner;
 
-public class MinerHandler implements Runnable {
+public class BCMineThreadRunner implements Runnable
+{
+	
 	@Override
-	public void run() {
-		MainView.updateStatusText("\n" + MainView.getThreads() + " threads started.");
-		for (int i = 0; i < MainView.getThreads(); i++) {
-			Thread miner = new Thread(new MinerClass(7));
+	public void run()
+	{
+		System.out.println(Program.THREADS + " threads started.");
+		for (int i = 0; i < Program.THREADS; i++)
+		{
+			Thread miner = new Thread(new BCMiner(7));
 			miner.start();
 		}
 	}

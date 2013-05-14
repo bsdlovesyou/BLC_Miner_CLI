@@ -25,23 +25,31 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.Socket;
 
-public class CoinClass implements Runnable {
-
-	String url = MainView.getURL();
-	int port = MainView.getPort();
-
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
-		getCoins();
+public class BCWallet implements Runnable
+{
+	private String address;
+	private String key;
+	
+	public BCWallet(String address, String key)
+	{
+		this.address = address;
+		this.key = key;
 	}
 
-	public void getCoins() {
-		try {
+	@Override
+	public void run()
+	{
+		getCoins(address, key);
+	}
+
+	public void getCoins(String address, String key)
+	{
+		try
+		{
 			String result = new String();
-			Socket sock = new Socket(this.url, this.port);
+			Socket sock = new Socket(Program.BLOO_URL, Program.BLOO_PORT);
 			String command = "{\"cmd\":\"my_coins\",\"addr\":\""
-					+ MainView.getAddr() + "\",\"pwd\":\"" + MainView.getKey()
+					+ Program.ADDRESS + "\",\"pwd\":\"" + key
 					+ "\"}";
 			DataInputStream is = new DataInputStream(sock.getInputStream());
 			DataOutputStream os = new DataOutputStream(sock.getOutputStream());
@@ -50,7 +58,8 @@ public class CoinClass implements Runnable {
 
 			BufferedReader in = new BufferedReader(new InputStreamReader(is));
 			String inputLine;
-			while ((inputLine = in.readLine()) != null) {
+			while ((inputLine = in.readLine()) != null)
+			{
 				result += inputLine;
 			}
 
@@ -59,20 +68,25 @@ public class CoinClass implements Runnable {
 			sock.close();
 			String coins = result.split("t\": ")[1];
 			coins = coins.split("}")[0];
-			MainView.updateBLC(Integer.parseInt(coins));
-
-		} catch (MalformedURLException murle) {
+			Program.updateBLC(Integer.parseInt(coins));
+		}
+		catch (MalformedURLException murle)
+		{
 			System.out.println("The URL seems to be malformed.");
-		} catch (IOException e) {
+		}
+		catch (IOException e)
+		{
 			System.out.println("There seems to be a problem connecting. Server down?");
 		}
 		getTotal();
 	}
 	
-	private void getTotal(){
-		try {
+	private void getTotal()
+	{
+		try
+		{
 			String result = new String();
-			Socket sock = new Socket(this.url, this.port);
+			Socket sock = new Socket(Program.BLOO_URL, Program.BLOO_PORT);
 			String command = "{\"cmd\":\"total_coins\"}";
 			DataInputStream is = new DataInputStream(sock.getInputStream());
 			DataOutputStream os = new DataOutputStream(sock.getOutputStream());
@@ -81,7 +95,8 @@ public class CoinClass implements Runnable {
 
 			BufferedReader in = new BufferedReader(new InputStreamReader(is));
 			String inputLine;
-			while ((inputLine = in.readLine()) != null) {
+			while ((inputLine = in.readLine()) != null)
+			{
 				result += inputLine;
 			}
 
@@ -90,18 +105,20 @@ public class CoinClass implements Runnable {
 			sock.close();
 			String[] amount = result.split("\"amount\": ");
 			amount=amount[1].split("}");
-			MainView.updateStatusText("Total BLC: "+amount[0]);
-			if(MainView.getHelp()==true){
-				MainView.updateStatusText("All data loaded, type \"help\" for help");
-				MainView.setHelp(false);
+			System.out.println("Total BLC: "+amount[0]);
+			if(Program.getHelp()==true)
+			{
+				System.out.println("All data loaded, type \"help\" for help");
+				Program.setHelp(false);
 			}
-			
-
-		} catch (MalformedURLException murle) {
+		}
+		catch (MalformedURLException murle)
+		{
 			System.out.println("The URL seems to be malformed.");
-		} catch (IOException e) {
+		}
+		catch (IOException e)
+		{
 			System.out.println("There seems to be a problem connecting. Server down?");
 		}
 	}
-
 }

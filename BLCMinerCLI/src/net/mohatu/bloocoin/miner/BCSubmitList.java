@@ -37,41 +37,53 @@ import java.util.ArrayList;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-public class SubmitListClass implements Runnable {
+public class BCSubmitList implements Runnable
+{
 	String hash = "";
 	String solution = "";
-	String url = MainView.getURL();
-	int port = MainView.getPort();
+	String url = Program.BLOO_URL;
+	int port = Program.BLOO_PORT;
 	ArrayList<String> solved = new ArrayList<String>();
 
 	@Override
-	public void run() {
+	public void run()
+	{
 		InputStream is;
 		BufferedReader br;
 		String line;
-		try {
+		try
+		{
 			is = new FileInputStream("BLC_Solved.txt");
 			br = new BufferedReader(new InputStreamReader(is,
 					Charset.forName("UTF-8")));
-			while ((line = br.readLine()) != null) {
+			while ((line = br.readLine()) != null)
+			{
 				solved.add(line);
 			}
 			is.close();
 			br.close();
 			System.out.println("Array Built: " + solved.size());
 			submit();
-		} catch (FileNotFoundException e) {
-			MainView.updateStatusText("BLC_Solved.txt could not be found.");
-		} catch (IOException e) {
+		}
+		catch (FileNotFoundException e)
+		{
+			System.out.println("BLC_Solved.txt could not be found.");
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
 		}
 		br = null;
 		is = null;
 	}
 
-	private void submit() {
-		for (int i = 0; i < solved.size(); i++) {
-			try {
-				Socket sock = new Socket(this.url, this.port);
+	private void submit()
+	{
+		for (int i = 0; i < solved.size(); i++)
+		{
+			try
+			{
+				Socket sock = new Socket(Program.BLOO_URL, Program.BLOO_PORT);
 				String result = new String();
 				DataInputStream is = new DataInputStream(sock.getInputStream());
 				DataOutputStream os = null;
@@ -83,7 +95,7 @@ public class SubmitListClass implements Runnable {
 				String command = "{\"cmd\":\"check"
 						+ "\",\"winning_string\":\"" + solution
 						+ "\",\"winning_hash\":\"" + hash + "\",\"addr\":\""
-						+ MainView.getAddr() + "\"}";
+						+ Program.ADDRESS + "\"}";
 				os = new DataOutputStream(sock.getOutputStream());
 				os.write(command.getBytes());
 
@@ -92,29 +104,33 @@ public class SubmitListClass implements Runnable {
 					result += inputLine;
 				}
 
-				if (result.contains("\"success\": true")) {
-					System.out.println("Result: Submitted");
-					MainView.updateStatusText(solution + " submitted");
-					Thread gc = new Thread(new CoinClass());
-					gc.start();
-				} else if (result.contains("\"success\": false")) {
-					System.out.println("Result: Failed");
-					MainView.updateStatusText("Submission of " + solution
-							+ " failed, already exists!");
+				if (result.contains("\"success\": true"))
+				{
+					System.out.println(solution+": Submitted");
+					//Thread gc = new Thread(new BCWallet());
+					//gc.start();
+				}
+				else if (result.contains("\"success\": false"))
+				{
+					System.out.println("Result: Failed " + solution);
 				}
 				is.close();
 				os.close();
 				os.flush();
 				sock.close();
-			} catch (UnknownHostException e) {
-				MainView.updateStatusText("Submission of " + solution
+			}
+			catch (UnknownHostException e)
+			{
+				System.out.println("Submission of " + solution
 						+ " failed, connection failed!");
-			} catch (IOException e) {
-				MainView.updateStatusText("Submission of " + solution
+			}
+			catch (IOException e)
+			{
+				System.out.println("Submission of " + solution
 						+ " failed, connection failed!");
 			}
 		}
-		Thread gc = new Thread(new CoinClass());
-		gc.start();
+		//Thread gc = new Thread(new BCWallet());
+		//gc.start();
 	}
 }

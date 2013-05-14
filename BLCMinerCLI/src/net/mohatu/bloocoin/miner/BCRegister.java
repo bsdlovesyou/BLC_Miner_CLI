@@ -36,31 +36,31 @@ import java.util.Random;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-public class RegisterClass implements Runnable {
-
-	String url = MainView.getURL();
-	int port = MainView.getPort();
-	String addr = "";
-	String key = "";
+public class BCRegister implements Runnable
+{
 	boolean submitted = false;
 
 	@Override
-	public void run() {
-		genData();
-		register();
+	public void run()
+	{
+		generateData();
 	}
 	
-	private void genData(){
-		Random r= new Random(),w = new Random();
-		addr = DigestUtils.sha1Hex((randomString()+r.nextInt(Integer.MAX_VALUE)).toString()).toString();
-		key = DigestUtils.sha1Hex((randomString()+w.nextInt(Integer.MAX_VALUE)).toString()).toString();
+	private void generateData()
+	{
+		Random r = new Random();
+		String addr = DigestUtils.sha1Hex((Utility.randomString(5)+r.nextInt(Integer.MAX_VALUE)).toString()).toString();
+		String key = DigestUtils.sha1Hex((Utility.randomString(5)+r.nextInt(Integer.MAX_VALUE)).toString()).toString();
 		System.out.println("Addr: " + addr + "\nKey: "+key);
+		register(addr, key);
 	}
 
-	private void register() {
-		try {
+	private void register(String addr, String key)
+	{
+		try
+		{
 			String result = new String();
-			Socket sock = new Socket(this.url, this.port);
+			Socket sock = new Socket(Program.BLOO_URL, Program.BLOO_PORT);
 			String command = "{\"cmd\":\"register" + "\",\"addr\":\"" + addr
 					+ "\",\"pwd\":\"" + key + "\"}";
 			DataInputStream is = new DataInputStream(sock.getInputStream());
@@ -70,7 +70,8 @@ public class RegisterClass implements Runnable {
 
 			BufferedReader in = new BufferedReader(new InputStreamReader(is));
 			String inputLine;
-			while ((inputLine = in.readLine()) != null) {
+			while ((inputLine = in.readLine()) != null)
+			{
 				result += inputLine;
 			}
 
@@ -78,42 +79,37 @@ public class RegisterClass implements Runnable {
 			os.close();
 			sock.close();
 			System.out.println(result);
-			if (result.contains("\"success\": true")) {
+			if (result.contains("\"success\": true"))
+			{
 				System.out.println("Registration successful: "+addr);
-				saveBloostamp();
-			} else if (result.contains("\"success\": false")) {
+				saveBloostamp(addr, key);
+			}
+			else if (result.contains("\"success\": false"))
+			{
 				System.out.println("Result: Failed");
-				MainView.updateStatusText("Registration failed. ");
 				System.exit(0);
 			}
-		} catch (UnknownHostException e) {
+		}
+		catch (UnknownHostException e)
+		{
 			System.out.println("Error: Unknown host.");
-		} catch (IOException e) {
+		}
+		catch (IOException e)
+		{
 			System.out.println("Error: Network error.");
 		}
 	}
 	
-	private String randomString() {
-		String chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-		Random r = new Random();
-		int limit = 5;
-		StringBuffer buf = new StringBuffer();
-
-		buf.append(chars.charAt(r.nextInt(26)));
-		for (int i = 0; i < limit; i++) {
-			buf.append(chars.charAt(r.nextInt(chars.length())));
+	private void saveBloostamp(String address, String key)
+	{
+		try
+		{
+			PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("bloostamp")));
+			out.print(address+":"+key);
+			out.close();
 		}
-		return buf.toString();
-	}
-	
-	private void saveBloostamp(){
-		try{
-		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("bloostamp")));
-		out.print(addr+":"+key);
-		out.close();
-		MainView.loadDataPub();
-
-		}catch(IOException e){
+		catch(IOException e)
+		{
 			System.out.println("Saving of bloostamp file failed, check permissions.");
 		}
 	}

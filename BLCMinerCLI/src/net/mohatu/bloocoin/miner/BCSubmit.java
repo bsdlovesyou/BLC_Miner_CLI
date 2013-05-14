@@ -30,46 +30,53 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-public class SubmitterClass implements Runnable {
+public class BCSubmit implements Runnable
+{
 
 	String hash = "";
 	String solution = "";
-	String url = MainView.getURL();
-	int port = MainView.getPort();
 	String addr = "";
 	String key = "";
 	boolean submitted = false;
 
-	public SubmitterClass(String hash, String solution) {
+	public BCSubmit(String hash, String solution)
+	{
 		this.hash = hash;
 		this.solution = solution;
 	}
 
 	@Override
-	public void run() {
-
-		while (!submitted) {
+	public void run()
+	{
+		while (!submitted)
+		{
 			boolean sawException = false;
-			try {
-				MainView.updateStatusText("Submitting " + solution);
-				submit();
+			try
+			{
+				System.out.println("Submitting " + solution);
+				submit(hash, solution);
 				Thread.sleep(5000);
-			} catch (InterruptedException e) {
+			}
+			catch (InterruptedException e)
+			{
 				sawException = true;
 			}
-			if (sawException) {
+			if (sawException)
+			{
 				Thread.currentThread().interrupt();
 			}
 		}
 	}
 
-	private void submit() {
-		try {
+	private void submit(String hash, String solution)
+	{
+		try
+		{
 			String result = new String();
-			Socket sock = new Socket(this.url, this.port);
+			Socket sock = new Socket(Program.BLOO_URL, Program.BLOO_PORT);
 			String command = "{\"cmd\":\"check" + "\",\"winning_string\":\""
 					+ solution + "\",\"winning_hash\":\"" + hash
-					+ "\",\"addr\":\"" + MainView.getAddr() + "\"}";
+					+ "\",\"addr\":\"" + Program.ADDRESS + "\"}";
 			DataInputStream is = new DataInputStream(sock.getInputStream());
 			DataOutputStream os = new DataOutputStream(sock.getOutputStream());
 			os.write(command.getBytes());
@@ -77,29 +84,35 @@ public class SubmitterClass implements Runnable {
 
 			BufferedReader in = new BufferedReader(new InputStreamReader(is));
 			String inputLine;
-			while ((inputLine = in.readLine()) != null) {
+			
+			while ((inputLine = in.readLine()) != null)
+			{
 				result += inputLine;
 			}
 
 			is.close();
 			os.close();
 			sock.close();
-			if (result.contains("\"success\": true")) {
+			if (result.contains("\"success\": true"))
+			{
 				submitted = true;
-				MainView.updateStatusText(solution + " submitted");
-			} else if (result.contains("\"success\": false")) {
-				submitted = true;
-				MainView.updateStatusText("Submission of " + solution
-						+ " failed, already exists!");
+				System.out.println(solution + " submitted");
 			}
-		} catch (UnknownHostException e) {
-			MainView.updateStatusText("Submission of " + solution
-					+ " failed, unknown host!");
-		} catch (IOException e) {
-			MainView.updateStatusText("Submission of " + solution
-					+ " failed, connection failed!");
+			else if (result.contains("\"success\": false"))
+			{
+				submitted = true;
+				System.out.println("Submission of " + solution + " failed, already exists!");
+			}
 		}
-		Thread gc = new Thread(new CoinClass());
-		gc.start();
+		catch (UnknownHostException e)
+		{
+			System.out.println("Submission of " + solution + " failed, unknown host!");
+		}
+		catch (IOException e)
+		{
+			System.out.println("Submission of " + solution + " failed, connection failed!");
+		}
+		//Thread gc = new Thread(new BCWallet());
+		//gc.start();
 	}
 }
